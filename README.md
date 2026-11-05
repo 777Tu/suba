@@ -1,1 +1,1 @@
-# unknown0
+# Subfolder Alone (suba) is a fast, lightweight CLI tool that lets you navigate to any subfolder from your project root using just its name.
