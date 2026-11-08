@@ -1,5 +1,6 @@
 
-examples/run
+
+run
 examples/project/
 *.o
 .DS_Store
