@@ -1,0 +1,5 @@
+
+examples/run
+examples/project/
+*.o
+.DS_Store
