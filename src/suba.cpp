@@ -16,7 +16,7 @@ suba::suba(std::filesystem::path u_p) {
 
 suba::suba(){this->r_path = std::filesystem::current_path();}
 
-bool suba::isdir(std::filesystem::path p) {
+bool suba::isdir(std::filesystem::path &p) {
 	return std::filesystem::directory_entry(p).is_directory();
 }
 
@@ -34,7 +34,7 @@ bool suba::findp(double &hsp){
     return true;
 }
 
-bool suba::sppath(std::filesystem::path spp){
+bool suba::sppath(std::filesystem::path &spp){
     return (spp.parent_path().empty());
 }
 	
@@ -71,9 +71,9 @@ void suba::scanp(std::filesystem::path &ep) {
 	}
 }
 
-std::vector<std::filesystem::directory_entry> suba::getpath(std::filesystem::path sp) {return getp(sp);}
+std::vector<std::filesystem::directory_entry> suba::getpath(std::filesystem::path &&sp) {return getp(sp);}
 
-std::vector<std::filesystem::directory_entry> suba::getp(std::filesystem::path sp) {
+std::vector<std::filesystem::directory_entry> suba::getp(std::filesystem::path &sp) {
     std::vector<std::filesystem::directory_entry> collsugg;
 	double hsp = fchash(sp.string(), 5);
 	bool f = true;

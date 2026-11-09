@@ -6,7 +6,6 @@
 #include <unordered_map>
 #include <vector>
 
-
 enum exp {Root, Dir};
 
 class suba {
@@ -22,19 +21,23 @@ public:
 	suba();
 	
 	void scan(enum exp ep);
-
-	std::vector<std::filesystem::directory_entry> getpath(std::filesystem::path sp);
+	
+	std::vector<std::filesystem::directory_entry> getpath(std::filesystem::path &&sp);
 
 	std::vector<std::filesystem::directory_entry> getrp();
+	
 	std::unordered_map<double,std::vector<unsigned int>> gethi();
 
 private:
 	void scanp(std::filesystem::path &ep);
 
-	std::vector<std::filesystem::directory_entry> getp(std::filesystem::path sp);
+	std::vector<std::filesystem::directory_entry> getp(std::filesystem::path &sp);
+	
 	bool findp(double &hsp);
-	bool sppath(std::filesystem::path spp);
-	bool isdir(std::filesystem::path p);
+	
+	bool sppath(std::filesystem::path &spp);
+	
+	bool isdir(std::filesystem::path &p);
 
 };
 
