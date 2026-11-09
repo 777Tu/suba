@@ -19,9 +19,9 @@ int main() {
 	
 	b.scan(Dir);
 	
-	cout<<t<<b.getpath("inside_pro1")[0];
+	cout<<t<<b.getpath("project1/inside_pro1")[0];
 	cout<<t<<b.getpath("inside_pro2")[0];
-	cout<<t<<b.getpath("inside_pro3")[0];
+	cout<<t<<b.getpath("project1/same_one")[0];
 
 	for(auto r : b.getpath("same_one")){
 	    cout<<t<<"Collision Suggestion: "<<r;

@@ -20,8 +20,7 @@ public:
 	suba(std::filesystem::path u_p);
 
 	suba();
-	bool isdir(std::filesystem::path p);
-
+	
 	void scan(enum exp ep);
 
 	std::vector<std::filesystem::directory_entry> getpath(std::filesystem::path sp);
@@ -34,6 +33,9 @@ private:
 
 	std::vector<std::filesystem::directory_entry> getp(std::filesystem::path sp);
 	bool findp(double &hsp);
+	bool sppath(std::filesystem::path spp);
+	bool isdir(std::filesystem::path p);
+
 };
 
 #endif

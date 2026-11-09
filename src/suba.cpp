@@ -34,6 +34,10 @@ bool suba::findp(double &hsp){
     return true;
 }
 
+bool suba::sppath(std::filesystem::path spp){
+    return (spp.parent_path().empty());
+}
+	
 void suba::scan(enum exp ep) {
 	switch(ep) {
 	case Root : scanp(this->r_path); break;
@@ -48,7 +52,8 @@ void suba::scanp(std::filesystem::path &ep) {
 	    if(!entry.is_directory()){continue;}
 
 	    std::string fn = entry.path().filename().string();
-	    this->r_paths.push_back(entry);
+	    std::filesystem::directory_entry rentry(entry.path().parent_path());
+	    this->r_paths.push_back(rentry);
 	    double cfh = fchash(fn, 5);
 	    if(!(findp(cfh))){
 	        this->sh_rpidx.insert({cfh, {rpidx}});
@@ -71,15 +76,43 @@ std::vector<std::filesystem::directory_entry> suba::getpath(std::filesystem::pat
 std::vector<std::filesystem::directory_entry> suba::getp(std::filesystem::path sp) {
     std::vector<std::filesystem::directory_entry> collsugg;
 	double hsp = fchash(sp.string(), 5);
-	if(!findp(hsp)){exit(1);}
+	bool f = true;
+	       /*
+	       sp - folder
+	       sp - coll
+	       sp - path/
+	       */
+	if(!findp(hsp)) {
+	    if(sppath(sp)){/*cout<<"folder not found";*/exit(1);}
+	    hsp = fchash(sp.filename().string(), 5);
+	    f = false;
+	}
+	if(!f){
+	    if(!findp(hsp)){/*cout<<"folder not found";*/exit(1);}
+	}
+
 	auto sh_pidx = this->sh_rpidx.at(hsp);
-	if(sh_pidx.size() ==1){
-	    unsigned int pidx = sh_pidx[0];
-		collsugg.push_back(this->r_paths.at(pidx));
-		return collsugg;
-	}
-    for(auto pidx : sh_pidx){
-	    collsugg.push_back(this->r_paths.at(pidx));
-	}
-	return collsugg;
+
+	if (sh_pidx.size() == 1) {
+	    std::string fn = (f) ? sp.string() : sp.filename().string();
+	    unsigned int pidx = sh_pidx.at(0);
+	    std::filesystem::directory_entry rentry((this->r_paths.at(pidx).path() / fn));
+	    collsugg.push_back(rentry);
+	    return collsugg;
+    }
+
+    for (auto pidxs : sh_pidx){
+        std::filesystem::directory_entry rentry((this->r_paths.at(pidxs).path() / sp.filename()));
+        if(!f){
+            if((this->r_paths.at(pidxs).path().filename() == sp.parent_path().filename())) {
+                rentry.assign((this->r_paths.at(pidxs).path() / sp.filename()));
+                collsugg.push_back(rentry);
+                return collsugg;
+                }
+            continue;
+        }  
+        collsugg.push_back(rentry);
+    }
+    return collsugg; 
 }
+
