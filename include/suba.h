@@ -7,9 +7,7 @@
 #include <vector>
 
 
-enum exp {
-	Root, Dir
-};
+enum exp {Root, Dir};
 
 class suba {
 private:

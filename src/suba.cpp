@@ -1,5 +1,4 @@
 
-
 #include <iostream>
 #include <string>
 #include <utility>
@@ -12,18 +11,27 @@ suba::suba(std::filesystem::path u_p) {
 	if(std::filesystem::exists(u_p) && isdir(u_p)) {
 		this->u_path=std::move(u_p);
 		this->r_path = std::filesystem::current_path();
-
-
-	} else {
-		exit(1);
-	}
+	} else {exit(1);}
 }
 
-suba::suba() {
-	this->r_path = std::filesystem::current_path();
-}
+suba::suba(){this->r_path = std::filesystem::current_path();}
+
 bool suba::isdir(std::filesystem::path p) {
 	return std::filesystem::directory_entry(p).is_directory();
+}
+
+std::vector<std::filesystem::directory_entry> suba::getrp() {
+	return this->r_paths;
+}
+
+std::unordered_map<double,std::vector<unsigned int>> suba::gethi() 
+	return this->sh_rpidx;
+}
+
+bool suba::findp(double &hsp){
+    auto sh_idx = this->sh_rpidx.find(hsp);
+    if(sh_idx == this->sh_rpidx.end()){return false;}
+    return true;
 }
 
 void suba::scan(enum exp ep) {
@@ -37,20 +45,7 @@ void suba::scan(enum exp ep) {
 	default:
 		exit(1);
 	}
-
 }
-
-std::vector<std::filesystem::directory_entry> suba::getpath(std::filesystem::path sp) {
-	return getp(sp);
-}
-
-std::vector<std::filesystem::directory_entry> suba::getrp() {
-	return this->r_paths;
-}
-std::unordered_map<double,std::vector<unsigned int>> suba::gethi() {
-	return this->sh_rpidx;
-}
-
 
 void suba::scanp(std::filesystem::path &ep) {
 	unsigned int rpidx = 0;
@@ -66,16 +61,13 @@ void suba::scanp(std::filesystem::path &ep) {
 	            rpidxs.push_back(this->sh_rpidx.at(cfh)[idx]);
 	        }
 	        rpidxs.push_back(rpidx);
-	        this->sh_rpidx.at(cfh)=rpidxs;
-	    	         
-	    }else{
-	        this->sh_rpidx.insert({cfh, {rpidx}});
-	    }
-	    rpidx++;
-		
+	        this->sh_rpidx.at(cfh)=rpidxs; 	         
+	    }else{this->sh_rpidx.insert({cfh, {rpidx}});}
+	    rpidx++;	
 	}
-
 }
+
+std::vector<std::filesystem::directory_entry> suba::getpath(std::filesystem::path sp) {return getp(sp);}
 
 std::vector<std::filesystem::directory_entry> suba::getp(std::filesystem::path sp) {
     std::vector<std::filesystem::directory_entry> collsugg;
@@ -91,9 +83,4 @@ std::vector<std::filesystem::directory_entry> suba::getp(std::filesystem::path s
 	    collsugg.push_back(this->r_paths.at(pidx));
 	}
 	return collsugg;
-}
-bool suba::findp(double &hsp){
-    auto sh_idx = this->sh_rpidx.find(hsp);
-    if(sh_idx == this->sh_rpidx.end()){return false;}
-    return true;
 }
