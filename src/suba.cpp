@@ -58,7 +58,7 @@ void suba::scanp(std::filesystem::path &ep) {
 	        rpidx++; continue;
 	    }
 	    std::vector<unsigned int> rpidxs;
-	    for(int idx = 0; idx < (this->sh_rpidx.at(cfh).size()) ; idx++){
+	    for(unsigned int idx = 0; idx < (this->sh_rpidx.at(cfh).size()) ; idx++){
 	        rpidxs.push_back((this->sh_rpidx.at(cfh).at(idx)));
 	    }
 	    rpidxs.push_back(rpidx);
