@@ -36,14 +36,9 @@ bool suba::findp(double &hsp){
 
 void suba::scan(enum exp ep) {
 	switch(ep) {
-	case Root:
-		scanp(this->r_path);
-		break;
-	case Dir:
-		scanp(this->u_path);
-		break;
-	default:
-		exit(1);
+	case Root : scanp(this->r_path); break;
+	case Dir : scanp(this->u_path); break;
+	default : exit(1);
 	}
 }
 
@@ -55,14 +50,18 @@ void suba::scanp(std::filesystem::path &ep) {
 	    std::string fn = entry.path().filename().string();
 	    this->r_paths.push_back(entry);
 	    double cfh = fchash(fn, 5);
-	    if(findp(cfh)){
-	        std::vector<unsigned int> rpidxs;
-	        for(int idx = 0; idx < (this->sh_rpidx[cfh].size()) ; idx++){
-	            rpidxs.push_back(this->sh_rpidx.at(cfh)[idx]);
-	        }
-	        rpidxs.push_back(rpidx);
-	        this->sh_rpidx.at(cfh)=rpidxs; 	         
-	    }else{this->sh_rpidx.insert({cfh, {rpidx}});}
+	    if(!(findp(cfh))){
+	        this->sh_rpidx.insert({cfh, {rpidx}});
+	        rpidx++;
+	        continue;
+	    }
+	    std::vector<unsigned int> rpidxs;
+	    for(int idx = 0; idx < (this->sh_rpidx[cfh].size()) ; idx++){
+	        rpidxs.push_back(this->sh_rpidx.at(cfh)[idx]);
+	    }
+	    rpidxs.push_back(rpidx);
+	    this->sh_rpidx.at(cfh)=rpidxs;
+	           
 	    rpidx++;	
 	}
 }
