@@ -24,7 +24,7 @@ std::vector<std::filesystem::directory_entry> suba::getrp() {
 	return this->r_paths;
 }
 
-std::unordered_map<double,std::vector<unsigned int>> suba::gethi() 
+std::unordered_map<double,std::vector<unsigned int>> suba::gethi(){
 	return this->sh_rpidx;
 }
 
