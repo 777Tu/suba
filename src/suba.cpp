@@ -8,10 +8,9 @@
 
 
 suba::suba(std::filesystem::path u_p) {
-	if(std::filesystem::exists(u_p) && isdir(u_p)) {
-		this->u_path=std::move(u_p);
-		this->r_path = std::filesystem::current_path();
-	} else {exit(1);}
+	if(!(std::filesystem::exists(u_p) && isdir(u_p))){exit(1);}
+	this->u_path=std::move(u_p);
+	this->r_path = std::filesystem::current_path();
 }
 
 suba::suba(){this->r_path = std::filesystem::current_path();}
@@ -30,8 +29,7 @@ std::unordered_map<double,std::vector<unsigned int>> suba::gethi(){
 
 bool suba::findp(double &hsp){
     auto sh_idx = this->sh_rpidx.find(hsp);
-    if(sh_idx == this->sh_rpidx.end()){return false;}
-    return true;
+    return (sh_idx == this->sh_rpidx.end())? false : true;
 }
 
 bool suba::sppath(std::filesystem::path &spp){
@@ -57,12 +55,11 @@ void suba::scanp(std::filesystem::path &ep) {
 	    double cfh = fchash(fn, 5);
 	    if(!(findp(cfh))){
 	        this->sh_rpidx.insert({cfh, {rpidx}});
-	        rpidx++;
-	        continue;
+	        rpidx++; continue;
 	    }
 	    std::vector<unsigned int> rpidxs;
-	    for(int idx = 0; idx < (this->sh_rpidx[cfh].size()) ; idx++){
-	        rpidxs.push_back(this->sh_rpidx.at(cfh)[idx]);
+	    for(int idx = 0; idx < (this->sh_rpidx.at(cfh).size()) ; idx++){
+	        rpidxs.push_back((this->sh_rpidx.at(cfh).at(idx)));
 	    }
 	    rpidxs.push_back(rpidx);
 	    this->sh_rpidx.at(cfh)=rpidxs;
@@ -108,7 +105,7 @@ std::vector<std::filesystem::directory_entry> suba::getp(std::filesystem::path &
                 rentry.assign((this->r_paths.at(pidxs).path() / sp.filename()));
                 collsugg.push_back(rentry);
                 return collsugg;
-                }
+            }
             continue;
         }  
         collsugg.push_back(rentry);
