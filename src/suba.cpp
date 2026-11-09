@@ -40,7 +40,7 @@ void suba::scan(enum exp ep) {
 
 }
 
-std::filesystem::directory_entry suba::getpath(std::filesystem::path sp) {
+std::vector<std::filesystem::directory_entry> suba::getpath(std::filesystem::path sp) {
 	return getp(sp);
 }
 
@@ -55,25 +55,45 @@ std::unordered_map<double,std::vector<unsigned int>> suba::gethi() {
 void suba::scanp(std::filesystem::path &ep) {
 	unsigned int rpidx = 0;
 	for(auto &entry : std::filesystem::recursive_directory_iterator(ep)) {
+	    if(!entry.is_directory()){continue;}
 
-		std::string fn = entry.path().filename().string();
-		this->r_paths.push_back(entry);
-		this->sh_rpidx.insert({fchash(fn, 5), {rpidx}});
-		rpidx++;
-
+	    std::string fn = entry.path().filename().string();
+	    this->r_paths.push_back(entry);
+	    double cfh = fchash(fn, 5);
+	    if(findp(cfh)){
+	        std::vector<unsigned int> rpidxs;
+	        for(int idx = 0; idx < (this->sh_rpidx[cfh].size()) ; idx++){
+	            rpidxs.push_back(this->sh_rpidx.at(cfh)[idx]);
+	        }
+	        rpidxs.push_back(rpidx);
+	        this->sh_rpidx.at(cfh)=rpidxs;
+	    	         
+	    }else{
+	        this->sh_rpidx.insert({cfh, {rpidx}});
+	    }
+	    rpidx++;
+		
 	}
 
 }
 
-std::filesystem::directory_entry suba::getp(std::filesystem::path sp) {
-
+std::vector<std::filesystem::directory_entry> suba::getp(std::filesystem::path sp) {
+    std::vector<std::filesystem::directory_entry> collsugg;
 	double hsp = fchash(sp.string(), 5);
-	auto sh_idx = this->sh_rpidx.find(hsp);
-	if(sh_idx == this->sh_rpidx.end()) {
-		exit(1);
+	if(!findp(hsp)){exit(1);}
+	auto sh_pidx = this->sh_rpidx.at(hsp);
+	if(sh_pidx.size() ==1){
+	    unsigned int pidx = sh_pidx[0];
+		collsugg.push_back(this->r_paths.at(pidx));
+		return collsugg;
 	}
-
-	unsigned int pidx = sh_idx->second[0];
-	return this->r_paths.at(pidx);
-
+    for(auto pidx : sh_pidx){
+	    collsugg.push_back(this->r_paths.at(pidx));
+	}
+	return collsugg;
+}
+bool suba::findp(double &hsp){
+    auto sh_idx = this->sh_rpidx.find(hsp);
+    if(sh_idx == this->sh_rpidx.end()){return false;}
+    return true;
 }

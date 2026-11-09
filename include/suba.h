@@ -26,7 +26,7 @@ public:
 
 	void scan(enum exp ep);
 
-	std::filesystem::directory_entry getpath(std::filesystem::path sp);
+	std::vector<std::filesystem::directory_entry> getpath(std::filesystem::path sp);
 
 	std::vector<std::filesystem::directory_entry> getrp();
 	std::unordered_map<double,std::vector<unsigned int>> gethi();
@@ -34,7 +34,8 @@ public:
 private:
 	void scanp(std::filesystem::path &ep);
 
-	std::filesystem::directory_entry getp(std::filesystem::path sp);
+	std::vector<std::filesystem::directory_entry> getp(std::filesystem::path sp);
+	bool findp(double &hsp);
 };
 
 #endif
