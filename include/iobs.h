@@ -23,7 +23,7 @@ private:
 	std::ios::openmode mode;
 	
 public:
-	WriteBin(const fs::path &wbf, enum w_type::wt_enum ew_type);
+	WriteBin(fs::path wbf, enum w_type::wt_enum ew_type);
 	
 	bool c_c_dtob(const std::unordered_map<double, PathLocation>  &cc_data);
 };
@@ -33,7 +33,7 @@ private:
 	fs::path ccb_file;
 	std::ios::openmode mode = std::ios::in | std::ios::binary;
 public:
-	ReadBin(const fs::path &rbf);
+	ReadBin(fs::path rbf);
 
 	std::unordered_map<double, PathLocation> btoc_cd();
 };

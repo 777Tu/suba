@@ -6,7 +6,7 @@
 #include "../include/iobs.h"
 
 
-WriteBin::WriteBin(const fs::path &wbf, enum w_type::wt_enum ew_type) : wb_file(std::move(wbf)) {
+WriteBin::WriteBin(fs::path wbf, enum w_type::wt_enum ew_type) : wb_file(std::move(wbf)) {
 	if(ew_type==w_type::a) {
 		mode = std::ios::app | std::ios::binary;
 	} else {
@@ -49,7 +49,7 @@ bool WriteBin::c_c_dtob(const std::unordered_map<double, PathLocation>  &cc_data
 	return true;
 }
 
-ReadBin::ReadBin(const fs::path &rbf) {
+ReadBin::ReadBin(fs::path rbf) {
 	if(fs::exists(rbf) && fs::is_regular_file(rbf)) {
 		ccb_file= std::move(rbf);
 	} else {
