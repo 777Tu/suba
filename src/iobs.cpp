@@ -6,8 +6,7 @@
 #include "../include/iobs.h"
 
 
-
-WriteBin::WriteBin(fs::path wbf, enum w_type::wt_enum ew_type) : wb_file(std::move(wbf)) {
+WriteBin::WriteBin(const fs::path &wbf, enum w_type::wt_enum ew_type) : wb_file(std::move(wbf)) {
 	if(ew_type==w_type::a) {
 		mode = std::ios::app | std::ios::binary;
 	} else {
@@ -15,7 +14,7 @@ WriteBin::WriteBin(fs::path wbf, enum w_type::wt_enum ew_type) : wb_file(std::mo
 	}
 }
 
-bool WriteBin::c_c_dtob(std::unordered_map<double, PathLocation>  cc_data) {
+bool WriteBin::c_c_dtob(const std::unordered_map<double, PathLocation>  &cc_data) {
 	std::ofstream wb_file(this->wb_file, this->mode);
 
 	if(!(wb_file.is_open())) {
@@ -26,20 +25,20 @@ bool WriteBin::c_c_dtob(std::unordered_map<double, PathLocation>  cc_data) {
 	size_t d_fhk_vmsvso_size = cc_data.size();
 
 	wb_file.write((char*)&d_fhk_vmsvso_size, sizeof(d_fhk_vmsvso_size));
-	for(auto [df_hash,p_location] : cc_data) {
+	for(const auto &[df_hash,p_location] : cc_data) {
 		wb_file.write((char*)&df_hash, sizeof(df_hash));
 
 		size_t s_dbk_offsvso_size = p_location.srp_db_offsets.size();
 		//Map<string, vec<streamoff>>
 		wb_file.write((char*)&s_dbk_offsvso_size, sizeof(s_dbk_offsvso_size));
-		for(auto [sdb_k, vso_v] : p_location.srp_db_offsets) {
+		for(const auto &[sdb_k, vso_v] : p_location.srp_db_offsets) {
 			size_t sdbk_size = sdb_k.size();
 			wb_file.write((char*)&sdbk_size, sizeof(sdbk_size));
 			wb_file.write((char*)sdb_k.data(), sdbk_size);
 			//size-key-Map-size, key-size-off
 			size_t voff_size = vso_v.size();
 			wb_file.write((char*)&voff_size, sizeof(voff_size));
-			for(auto stroff : vso_v) {
+			for(const auto &stroff : vso_v) {
 				wb_file.write((char*)&stroff, sizeof(stroff));
 			}
 		}
@@ -50,8 +49,7 @@ bool WriteBin::c_c_dtob(std::unordered_map<double, PathLocation>  cc_data) {
 	return true;
 }
 
-
-ReadBin::ReadBin(fs::path rbf) {
+ReadBin::ReadBin(const fs::path &rbf) {
 	if(fs::exists(rbf) && fs::is_regular_file(rbf)) {
 		ccb_file= std::move(rbf);
 	} else {
@@ -70,7 +68,6 @@ std::unordered_map<double, PathLocation> ReadBin::btoc_cd() {
 
 	size_t d_fhk_vmsvso_size = 0;
 	rb_file.read((char*)&d_fhk_vmsvso_size, sizeof(d_fhk_vmsvso_size));
-
 
 	/*
 	 p-size<double, pl>
@@ -110,7 +107,7 @@ std::unordered_map<double, PathLocation> ReadBin::btoc_cd() {
 			vso_v= {};
 		}
 
-		PathLocation p_location = {.srp_db_offsets=srp_db_offsets};
+		PathLocation p_location ={.srp_db_offsets=srp_db_offsets};
 
 		cc_data[d_fhash_k]=p_location;
 	}
