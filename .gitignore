@@ -2,5 +2,6 @@
 
 *run
 examples/project/
+*.bin
 *.o
 .DS_Store
