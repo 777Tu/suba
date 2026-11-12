@@ -103,13 +103,13 @@ std::unordered_map<double, PathLocation> ReadBin::btoc_cd() {
 				rb_file.read((char*)&offs, sizeof(offs));
 				vso_v.push_back(offs);
 			}
-			srp_db_offsets[sdb_k]=vso_v;
-			vso_v= {};
+			srp_db_offsets[std::move(sdb_k)]=std::move(vso_v);
+			//vso_v= {};
 		}
 
-		PathLocation p_location ={.srp_db_offsets=srp_db_offsets};
+		PathLocation p_location ={.srp_db_offsets=std::move(srp_db_offsets)};
 
-		cc_data[d_fhash_k]=p_location;
+		cc_data[std::move(d_fhash_k)]=std::move(p_location);
 	}
 
 	return cc_data;
