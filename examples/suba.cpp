@@ -18,28 +18,31 @@ int main() {
 	suba b(p);
 	
 	b.scan(Dir);
+	int i = 1;
+	unordered_map<double, PathLocation> sh_locate = b.getshl();
 	
+	cout<<t<<"["<<sh_locate.size()
+	<<"] size of <double, PathLocation>";
+	for(auto &[folder, location] : sh_locate){
+	    cout<<t<<i<<"="<<folder<<"\t ["<<location.srp_db_offsets.size()<<"] sa_Files:\n\t\t";
+	    for(auto &[sa_file, vec_offsets] : location.srp_db_offsets){
+	        cout<<"\n\t\t: "<<sa_file;
+	        for(auto offset : vec_offsets){
+	            cout<<": _"<<offset;
+	        }   
+	            
+	    }
+	  i++;  
+	}
+
+	/*
 	cout<<t<<b.getpath("project1/inside_pro1")[0];
 	cout<<t<<b.getpath("inside_pro2")[0];
 	cout<<t<<b.getpath("project1/same_one")[0];
 
 	for(auto r : b.getpath("same_one")){
 	    cout<<t<<"Collision Suggestion: "<<r;
-	}
-
-
-
-	/*
-	for(auto [k, v] : b.gethi()){
-	    if(v.size()==1){cout<<t<<k<<" = "<<v[0];continue;}
-	    for(auto vi : v){
-	        cout<<t<<k<<" = "<<vi<<",";
-	    }
-	}
-	for(auto entry : b.getrp()){
-	    cout<<t<<entry;
-	}
-	*/
+	}*/
 
 	cout<<n;
 
