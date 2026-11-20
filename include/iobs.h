@@ -9,7 +9,7 @@
 #include <ios>
 
 
-namespace{ namespace fs = std::filesystem; }
+namespace fs = std::filesystem;
 
 namespace w_type { enum wt_enum {a, o}; }
 

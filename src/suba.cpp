@@ -4,7 +4,6 @@
 #include <chrono>
 #include <ctime>
 #include <sstream>
-#include <string>
 #include <utility>
 
 #include "../include/fchash.h"
@@ -12,7 +11,7 @@
 #include "../include/suba.h"
 
 
-suba::suba(std::filesystem::path u_p, std::filesystem::path sabf="suba_fl.bin") {
+suba::suba(std::filesystem::path u_p , std::filesystem::path sabf) {
 	if(!(std::filesystem::exists(u_p) && isdir(u_p))){
 		throw std::runtime_error("suba: Path doesn't exists.");
 	}
@@ -116,21 +115,23 @@ void suba::scanp(std::filesystem::path &ep) {
 std::vector<std::filesystem::directory_entry> suba::getpath(std::filesystem::path &&sp) {return getp(sp);}
 
 std::vector<std::filesystem::directory_entry> suba::getp(std::filesystem::path &sp) {
+
     std::vector<std::filesystem::directory_entry> collsugg;
+    /*
 	double hsp = fchash(sp.string(), 5);
 	bool f = true;
-	       /*
+	       /
 	       sp - folder
 	       sp - coll
 	       sp - path/
-	       */
+	       /
 	if(!findp(hsp)) {
-	    if(sppath(sp)){/*cout<<"folder not found";*/exit(1);}
+	    if(sppath(sp)){/cout<<"folder not found";/exit(1);}
 	    hsp = fchash(sp.filename().string(), 5);
 	    f = false;
 	}
 	if(!f){
-	    if(!findp(hsp)){/*cout<<"folder not found";*/exit(1);}
+	    if(!findp(hsp)){/cout<<"folder not found";/exit(1);}
 	}
 
 	auto sh_pidx = this->sh_rpidx.at(hsp);
@@ -155,7 +156,9 @@ std::vector<std::filesystem::directory_entry> suba::getp(std::filesystem::path &
         }  
         collsugg.push_back(rentry);
     }
+    */
     return collsugg;
+    
 }
 
 std::string suba::fngen() {
@@ -174,7 +177,7 @@ std::string suba::fngen() {
     return oss.str();
 }
 
-void suba::rbinf(std::filesystem::path sabf="suba_fl.bin") {
+void suba::rbinf(std::filesystem::path sabf) {
 	if((std::filesystem::exists(sabf))) {
 		ReadBin ccd((sabf.string()));
 		this->sh_location =ccd.btoc_cd();

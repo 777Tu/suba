@@ -5,7 +5,10 @@
 #include <filesystem>
 #include <ios>
 #include <unordered_map>
+#include <string>
 #include <vector>
+
+#include "iobs.h"
 
 
 constexpr std::streamoff MAXO = 1 * 1024 * 1024;
@@ -33,7 +36,7 @@ public:
 
     void rbinf(std::filesystem::path sabf="suba_fl.bin");
 
-    void fngen();
+    std::string fngen();
 
 private:
 	void scanp(std::filesystem::path &ep);
