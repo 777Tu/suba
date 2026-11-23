@@ -1,83 +1,129 @@
-# Subfolder Alone (`suba`) *Work in Progress*
+# Subfolder Alone (`suba`) — Work in Progress
 
-**suba** is a fast, lightweight C++ CLI tool built to do one thing well: jump directly to any subfolder in your project or root directory using just its name—with **zero learning phase**, **zero guessing**, and **zero external dependencies**.
+**Suba** is a lightweight C++ tool for navigating folders by name.
 
-> **Project Status:** Core directory explorer, `fchash` compact key generator, 1MB timestamp-sharded flat-file store (`.sa`), and binary offset indexer (`suba_fl.bin`) are complete. Path resolver (`getpath`) and shell wrappers (`sa` / `s`) are currently in active development.
+It explores the directory you choose once, indexes the folder names and locations, and lets you jump to a matching folder without typing or searching the full path every time.
 
----
+Suba does not learn from your navigation history. It starts from the directory you give it and is ready to find folders immediately.
 
-## Why `suba` Exists
+## What Suba does
 
-Traditional directory jumpers (`zoxide`, `autojump`, `fasd`) rely on **habit learning**—you have to manually visit folders repeatedly before the tool becomes useful. Worse, when two different folders share the exact same name (e.g., `example/test` and `internet/test`), frequency-based tools silently guess and drop you into whichever one you visited more often.
+- Explore a project or directory tree once.
+- Find a folder using only its name.
+- Use extra path context to narrow down a match.
+- Show a list when the same folder name exists in more than one place.
+- Keep jump data separated from the original project files.
+- Skip missing or damaged shard files without stopping the whole lookup instance.
 
-**`suba` takes the opposite approach:**
-* **Explore, Don't Learn:** Point `suba` at a project or root directory once. It immediately explores the entire tree and indexes everything—ready to jump on day one.
-* **No Silent Guessing:** When multiple folders share the same name, `suba` never picks for you blindly. It either prompts you with a clean numbered list (**Collision Suggest**) or jumps straight there if you pass parent context (e.g., `sa example/test`).
-* **Strict Unix Philosophy:** `suba` does not try to replace your shell or claim to do everything. Its sole job is instant subfolder navigation (`sa <folder>` or `s <folder>`). Everything else stays with `cd` and your standard CLI tools.
-
----
-
-## How It Works: The Sharded Two-Store Architecture
-
-Instead of dumping everything into one bloated database file or scanning thousands of paths on every jump, `suba` splits storage into **two decoupled stores** with automatic file sharding:
-
-1. **The Heavy Store (1MB-Capped Timestamped `.sa` Shards):** Stores the actual full folder paths (the "cartons"). Each `.sa` file is named using its creation timestamp (e.g., `2026-11-20_17-18-50-296773.sa`) and capped at a **1MB size limit**—once a file hits 1MB, `suba` automatically rolls over into a new timestamped `.sa` shard to keep individual file operations fast and lightweight.
-2. **The Lightweight Index (`suba_fl.bin`):** Uses **`fchash`** to compress any folder name—no matter how long—into a compact `double` key mapped to a `PathLocation` structure (`<sa_filename, vector<streamoff>>`). This tracks **both which `.sa` shard file(s) contain the match and the exact byte offsets inside each shard**.
-
-### Visual Flow
+Example:
 
 ```text
-  [ Lightweight Index: suba_fl.bin ]                    [ 1MB-Capped Heavy Shards ]
-  ┌──────────────────────────────────────────┐          ┌────────────────────────────────────┐
-  │ fchash("test") ─► 10.20                  │    ┌───►│ 2026-11-20_17-18-50-296773.sa      │
-  │   ├─ "2026-11-20_17-18-50-296773.sa"     │    │     │   Byte 42: "example/test"          │
-  │   │   └─► [42] ──────────────────────────┼────┘     └────────────────────────────────────┘
-  │   └─ "2026-11-20_17-18-52-814091.sa"     │          ┌────────────────────────────────────┐
-  │       └─► [108] ─────────────────────────┼────────► │ 2026-11-20_17-18-52-814091.sa      │
-  └──────────────────────────────────────────┘          │   Byte 108: "internet/test"        │
-                                                        └────────────────────────────────────┘
+sa inside_pro1
+
+sa assets/styles
+
+sa styles
 ```
 
-### Handling Collisions & Selective Lookup Across Shards
-* **Unique Match (`sa inside_pro1`):** `fchash` maps to a single `.sa` shard and a single byte offset. `suba` opens only that shard, seeks directly to that byte offset, reads the single path, and jumps immediately.
-* **Collision Suggest (`sa test`):** Even if two folders named `test` were scanned across a large tree and landed in different 1MB timestamped shards, `PathLocation` groups both shard names and their exact offsets under the same `fchash` key (`10.20`). `suba` seeks straight to those exact positions and lists them for you to pick:
-  ```text
-  1: example/test
-  2: internet/test
-  ```
-* **Direct Context Jump (`sa internet/test`):** Already know which one you want? Provide partial parent info (`internet/test`), and `suba` fetches only the colliding offsets across the relevant shards, filters for `internet/test`, and jumps straight there without prompting.
+A unique folder can return directly:
 
-*(Planned Optimization: Per-entry compression inside the 1MB `.sa` shards so only the exact target path requested by the user is ever decompressed on disk.)*
+```text
+project/project1/inside_pro1
+```
 
----
+A repeated folder name can produce a collision suggestion:
 
-## `suba` vs. `zoxide` & Similar Tools
+```text
+1: project/project1/same_one
+2: project/project2/same_one
+3: project/project3/same_one
+```
 
-| Feature | `suba` (Subfolder Alone) | `zoxide` / `autojump` / `fasd` |
-| :--- | :--- | :--- |
-| **Setup Behavior** | **Immediate tree exploration** (works instantly) | **Habit learning** (must visit folders over time) |
-| **Duplicate Folder Names** | **Collision Suggest** list + direct `parent/child` jump | Silently jumps to highest-ranked frequency match |
-| **Storage & Lookup** | `fchash` + 1MB timestamped `.sa` shards + O(1) `seekg` | Single database query / string scoring across history |
-| **Long Folder Names** | Fixed-size `double` hash key via `fchash` | Stores full strings in index |
-| **Target Platform** | Linux / Bash / **Android (Termux)** *(multi-platform planned based on community interest)* | Cross-platform |
+If you provide context such as `assets/styles`, Suba can find `project/assets/styles` instead of listing every folder named `styles`.
 
----
+## How it works
 
-## Roadmap
+Suba has two main stores:
 
-- [x] Recursive directory explorer (`scan`)
-- [x] Compact `double` folder hashing (`fchash`)
-- [x] 1MB-capped timestamped `.sa` path shards
-- [x] Custom binary serializer & multi-shard offset indexer (`iobs`)
-- [ ] Direct lookup, context filter & Collision Suggest resolver (`getpath`)
-- [ ] Shell integration (`sa` & `s` commands for Bash / Termux)
-- [ ] Per-record compression inside `.sa` shards
-- [ ] Multi-shell & cross-platform support (Zsh, Fish, PowerShell, Windows/macOS)
+1. **Path shards**
 
----
+   Folder paths are stored in timestamped `.sa` files. These files are written in small chunks, currently capped around 1 MB each, so Suba does not keep every path in one large unstructured file.
 
-## Support & Contributions
+2. **Binary offset index**
 
-`suba` is built from scratch in pure C++17 with no external libraries—originally crafted for fast terminal workflows on Linux and Android (Termux).
+   `suba_fl.bin` stores compact `fchash` keys and points to the `.sa` file and byte offset for each matching path.
 
-If you like the architecture or want multi-platform/multi-shell support prioritized, drop a ⭐ **Star** on the repo to show support!
+The lookup flow is:
+
+```text
+folder name or path context
+        |
+        v
+  find the fchash key
+        |
+        v
+  get matching shard and offset records
+        |
+        v
+  read only those path records
+        |
+        v
+  return one match or collision suggestions
+```
+
+The code already checks whether the requested shard exists and whether an offset can be read. A missing or damaged shard reports an error and is skipped instead of ending the complete Suba instance.
+
+## `suba` and tools like `zoxide`
+
+Zoxide and similar tools learn which directories you visit. They build a ranked history, while Suba explores the directory you specify and builds a folder-location index.
+
+| Behavior | Suba | Zoxide and similar tools |
+|---|---|---|
+| Knowledge source | Directory scan you choose | Directory visits and history |
+| First use | Finds folders immediately after indexing | Results improve as folders are visited |
+| Folder-name collision | Suggests matching paths or uses context | Usually chooses the highest-ranked match |
+| Direct path context | Supported by `getpath()` | Matching rules and ranking still apply |
+| Storage | Hash keys, shard names and offsets | Ranked directory records |
+| Main goal | Find a known folder without guessing | Rank frequently used folders |
+
+Both tools solve directory navigation, but they do it in different ways. Suba is built for explicit folder lookup inside selected projects or trees; not for replacing every shell command or replacing `cd`.
+
+## Project status
+
+Working now:
+
+- Recursive directory scanning.
+- Flexible `fchash` lookup keys.
+- Timestamped `.sa` path shards.
+- Binary shard-and-offset index.
+- Direct path and folder-name lookup.
+- Parent/path-context filtering.
+- Collision suggestions.
+- Missing-shard and damaged-offset error handling.
+
+Still in progress:
+
+- Shell integration for `sa` and `s` commands.
+- Per-record compression inside path shards.
+- More platform and shell support.
+- Documentation and installation instructions.
+
+Suba is currently developed and tested on Android through Termux. It uses C++ filesystem and path APIs, so portability will be addressed as the core becomes stable.
+
+## Build
+
+The project is still under active development. The source can be compiled manually for testing:
+
+```bash
+g++ suba.cpp ../src/iobs.cpp ../src/suba.cpp -o run
+```
+
+Run paths and setup may change while `getpath()` and shell integration are still being completed.
+
+## About contributions
+
+The core is being built manually. Feedback about the architecture, lookup behavior and multi-platform support is welcome.
+
+If Suba's approach interests you, star or follow the repository:
+
+https://github.com/777Tu/suba
