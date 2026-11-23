@@ -221,7 +221,8 @@ std::vector<std::string> suba::getp(std::filesystem::path &sp) {
 	if(collsugg.size()!=0)return collsugg;
 
 	for(auto &[srp, voff] : srp_voff) {
-
+	    if(rerror.count(srp)) continue;
+	    
 		std::ifstream rsa_file(srp);
 		for(auto &offset : voff) {
 			rsa_file.seekg(offset);
