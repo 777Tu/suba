@@ -30,7 +30,7 @@ public:
 	
 	void scan(enum exp ep);
 	
-	std::vector<std::filesystem::directory_entry> getpath(std::filesystem::path &&sp);
+	std::vector<std::string> getpath(std::filesystem::path &&sp);
 	
 	std::unordered_map<double,PathLocation> getshl();
 
@@ -41,7 +41,11 @@ public:
 private:
 	void scanp(std::filesystem::path &ep);
 
-	std::vector<std::filesystem::directory_entry> getp(std::filesystem::path &sp);
+	std::vector<std::string> getp(std::filesystem::path &sp);
+
+	bool eqcoll(std::string &rp, std::string rsp);
+
+	bool eqrcoll(std::string &rp, std::string rsp);
 	
 	bool findp(double &hsp);
 	

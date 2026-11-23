@@ -18,7 +18,7 @@ bool WriteBin::c_c_dtob(const std::unordered_map<double, PathLocation>  &cc_data
 	std::ofstream wb_file(this->wb_file, this->mode);
 
 	if(!(wb_file.is_open())) {
-		std::cerr << "File not open.";
+		throw std::runtime_error("suba: error: failed to open index file");
 		return false;
 	}
 
@@ -29,13 +29,11 @@ bool WriteBin::c_c_dtob(const std::unordered_map<double, PathLocation>  &cc_data
 		wb_file.write((char*)&df_hash, sizeof(df_hash));
 
 		size_t s_dbk_offsvso_size = p_location.srp_db_offsets.size();
-		//Map<string, vec<streamoff>>
 		wb_file.write((char*)&s_dbk_offsvso_size, sizeof(s_dbk_offsvso_size));
 		for(const auto &[sdb_k, vso_v] : p_location.srp_db_offsets) {
 			size_t sdbk_size = sdb_k.size();
 			wb_file.write((char*)&sdbk_size, sizeof(sdbk_size));
 			wb_file.write((char*)sdb_k.data(), sdbk_size);
-			//size-key-Map-size, key-size-off
 			size_t voff_size = vso_v.size();
 			wb_file.write((char*)&voff_size, sizeof(voff_size));
 			for(const auto &stroff : vso_v) {
@@ -53,7 +51,7 @@ ReadBin::ReadBin(fs::path rbf) {
 	if(fs::exists(rbf) && fs::is_regular_file(rbf)) {
 		ccb_file= std::move(rbf);
 	} else {
-		throw std::runtime_error("Invalid file: does not exist or is not a regular file.");
+		throw std::runtime_error("suba: error: File  does not exist or is not a regular file");
 	}
 }
 
@@ -61,7 +59,7 @@ std::unordered_map<double, PathLocation> ReadBin::btoc_cd() {
 
 	std::ifstream rb_file(this->ccb_file, this->mode);
 	if(!(rb_file.is_open())) {
-		throw std::runtime_error("File not open");
+		throw std::runtime_error("suba: error: failed to open index file");
 	}
 
 	std::unordered_map<double, PathLocation> cc_data;
@@ -69,6 +67,9 @@ std::unordered_map<double, PathLocation> ReadBin::btoc_cd() {
 	size_t d_fhk_vmsvso_size = 0;
 	rb_file.read((char*)&d_fhk_vmsvso_size, sizeof(d_fhk_vmsvso_size));
 
+	if (rb_file.fail() || d_fhk_vmsvso_size > 10000000) {
+	    throw std::runtime_error("suba: Corrupted index file header (invalid map size).");
+	 }
 	/*
 	 p-size<double, pl>
 	        key-double
@@ -84,13 +85,18 @@ std::unordered_map<double, PathLocation> ReadBin::btoc_cd() {
 
 		std::unordered_map<std::string, std::vector<std::streamoff>> srp_db_offsets;
 		size_t s_dbk_offsvso_size = 0;
-		//size db vec
 		rb_file.read((char*)&s_dbk_offsvso_size, sizeof(s_dbk_offsvso_size));
+		if (rb_file.fail() || s_dbk_offsvso_size > 100000) {
+		    throw std::runtime_error("suba: Corrupted index file (invalid DB count).");
+		}
 		for(size_t s_db_size = 0; s_db_size<s_dbk_offsvso_size; s_db_size++) {
 			std::string sdb_k;
 
 			size_t sdbk_size =0;
 			rb_file.read((char*)&sdbk_size, sizeof(sdbk_size));
+            if (rb_file.fail() || sdbk_size == 0 || sdbk_size > 512) {
+                throw std::runtime_error("suba: Corrupted index file (invalid filename length).");
+            }
 			sdb_k.resize(sdbk_size);
 			rb_file.read((char*)sdb_k.data(), sdbk_size);
 
@@ -98,13 +104,15 @@ std::unordered_map<double, PathLocation> ReadBin::btoc_cd() {
 			size_t voff_size = 0;
 			rb_file.read((char*)&voff_size, sizeof(voff_size));
 
+			if (rb_file.fail() || voff_size > 1000000) {
+			    throw std::runtime_error("suba: Corrupted index file (invalid offsets vector size).");
+			}
 			for(size_t stroff_size = 0; stroff_size<voff_size; stroff_size++) {
 				std::streamoff offs;
 				rb_file.read((char*)&offs, sizeof(offs));
 				vso_v.push_back(offs);
 			}
 			srp_db_offsets[std::move(sdb_k)]=std::move(vso_v);
-			//vso_v= {};
 		}
 
 		PathLocation p_location ={.srp_db_offsets=std::move(srp_db_offsets)};

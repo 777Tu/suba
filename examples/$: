@@ -1,0 +1,14 @@
+/data/data/com.termux/files/home/suba/examples:
+total 1.3M
+-rw-------. 1 u0_a377 u0_a377    0 Nov 12 16:34 $:
+-rw-------. 1 u0_a377 u0_a377  234 Nov 23 09:13 2026-11-23_09-13-34-302483.sa
+-rw-------. 1 u0_a377 u0_a377 184K Nov 23 09:16 2026-11-23_09-16-27-470982.sa
+-rw-------. 1 u0_a377 u0_a377  11M Nov 12 17:03 core
+-rw-------. 1 u0_a377 u0_a377  250 Nov 12 17:14 data.bin
+-rw-------. 1 u0_a377 u0_a377  344 Nov  7 20:36 fchash.cpp
+-rw-------. 1 u0_a377 u0_a377 1.1K Nov 12 15:08 iobs.cpp
+-rw-------. 1 u0_a377 u0_a377    1 Nov  7 20:16 main.cpp
+drwx------. 5 u0_a377 u0_a377 3.4K Nov  8 21:57 project
+-rwx------. 1 u0_a377 u0_a377 346K Nov 23 09:16 run
+-rw-------. 1 u0_a377 u0_a377 1.1K Nov 23 09:14 suba.cpp
+-rw-------. 1 u0_a377 u0_a377  45K Nov 23 09:16 suba_fl.bin

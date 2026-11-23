@@ -13,7 +13,7 @@
 
 suba::suba(std::filesystem::path u_p , std::filesystem::path sabf) {
 	if(!(std::filesystem::exists(u_p) && isdir(u_p))){
-		throw std::runtime_error("suba: Path doesn't exists.");
+		throw std::runtime_error("suba: error: Path doesn't exists");
 	}
 	this->u_path=std::move(u_p);
 	this->r_path = std::filesystem::current_path();
@@ -61,7 +61,7 @@ void suba::scanp(std::filesystem::path &ep) {
 	std::ofstream wsa_file(gsa_file);
 
 	if(!wsa_file.is_open()) {
-		throw std::runtime_error("suba: File couldn't open.");
+		throw std::runtime_error("suba: error: failed to open index file");
 	}
 
 	PathLocation p_location;
@@ -79,13 +79,12 @@ void suba::scanp(std::filesystem::path &ep) {
 			gsa_file=fngen();
 			wsa_file.open(gsa_file, std::ios::out | std::ios::app);
 			if(!(wsa_file.is_open())) {
-				throw std::runtime_error("suba: File couldn't open");
+				throw std::runtime_error("suba: error: failed to open index file");
 			}
 		}
-		//std::filesystem::directory_entry rentry(entry.path()/*.parent_path()*/);
 		double cfh = fchash(f_name, 5);
 		offset = wsa_file.tellp();
-		wsa_file<<entry<<std::endl;
+		wsa_file<<(entry.path().string())<<std::endl;
 
 		if(!(findp(cfh) ) ) {
 			rp_offsets= {offset};
@@ -112,53 +111,109 @@ void suba::scanp(std::filesystem::path &ep) {
 	wbinf(this->sab_file);
 }
 
-std::vector<std::filesystem::directory_entry> suba::getpath(std::filesystem::path &&sp) {return getp(sp);}
+std::vector<std::string> suba::getpath(std::filesystem::path &&sp) {return getp(sp);}
 
-std::vector<std::filesystem::directory_entry> suba::getp(std::filesystem::path &sp) {
+bool suba::eqcoll(std::string &rp, std::string rsp) {
+	if(rp.size() < rsp.size()) return false;
+	return (rp.substr((rp.size()-rsp.size()))==rsp);
+}
 
-    std::vector<std::filesystem::directory_entry> collsugg;
-    /*
+bool suba::eqrcoll(std::string &rp, std::string rsp) {
+	if(rp.size() < rsp.size() || rsp.size() <=2) return false;
+	for(size_t i = 0; i<(rsp.size()-2); i++) {
+		if(rsp.substr(i) == rp.substr((rp.size()-rsp.size())+i)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+std::vector<std::string> suba::getp(std::filesystem::path &sp) {
+
+    if(!this->dfh_exists){
+        if (std::filesystem::exists(".backup_suba_fl.bin")) {
+            std::cerr << "suba: index missing, restoring from backup...\n";
+                // restore
+            }
+            
+        if (!this->dfh_exists) {
+            throw std::runtime_error("suba: error: no index file found. Run 'suba -e <path>' to scan first.");
+        }
+    
+    }
+	std::vector<std::string> collsugg;
+	std::string rentry;
+
+	std::string sv = sp.string();
+	if (!sv.empty() && sv.back() == '/') {
+		sp = sv.substr(0, sv.size() - 1);
+	}
+
 	double hsp = fchash(sp.string(), 5);
 	bool f = true;
-	       /
-	       sp - folder
-	       sp - coll
-	       sp - path/
-	       /
-	if(!findp(hsp)) {
-	    if(sppath(sp)){/cout<<"folder not found";/exit(1);}
-	    hsp = fchash(sp.filename().string(), 5);
-	    f = false;
+
+	//sp - folder
+	//sp - coll
+	//sp - path/
+
+	if (!findp(hsp)) {
+		if (sppath(sp)) {
+			throw std::runtime_error("suba: error: no matching directory");
+		}
+		hsp = fchash(sp.filename().string(), 5);
+		f = false;
 	}
-	if(!f){
-	    if(!findp(hsp)){/cout<<"folder not found";/exit(1);}
+	if (!f) {
+		if (!findp(hsp)) {
+			throw std::runtime_error("suba: error: no matching directory");
+		}
 	}
 
-	auto sh_pidx = this->sh_rpidx.at(hsp);
+	auto srp_voff= this->sh_location.at(hsp).srp_db_offsets;
 
-	if (sh_pidx.size() == 1) {
-	    std::string fn = (f) ? sp.string() : sp.filename().string();
-	    unsigned int pidx = sh_pidx.at(0);
-	    std::filesystem::directory_entry rentry((this->r_paths.at(pidx).path() / fn));
-	    collsugg.push_back(rentry);
-	    return collsugg;
-    }
+	for(auto &[srp, voff] : srp_voff) {
 
-    for (auto pidxs : sh_pidx){
-        std::filesystem::directory_entry rentry((this->r_paths.at(pidxs).path() / sp.filename()));
-        if(!f){
-            if((this->r_paths.at(pidxs).path().filename() == sp.parent_path().filename())) {
-                rentry.assign((this->r_paths.at(pidxs).path() / sp.filename()));
-                collsugg.push_back(rentry);
-                return collsugg;
-            }
-            continue;
-        }  
-        collsugg.push_back(rentry);
-    }
-    */
-    return collsugg;
-    
+		std::ifstream rsa_file(srp);
+		if(!(std::filesystem::exists(srp) && rsa_file.is_open())) {
+			std::cout<<"suba: error: "<<srp<<" doesn't exists or couldn't open"<<std::endl;
+			continue;
+		}
+		if(f) {
+			for(auto &offset : voff) {
+				rsa_file.seekg(offset);
+				std::getline(rsa_file, rentry);
+				collsugg.push_back(std::move(rentry));
+			}
+			rsa_file.close() ; continue;
+		}
+
+		for(auto &offset : voff) {
+			rsa_file.seekg(offset);
+			std::getline(rsa_file, rentry);
+			if(!(eqcoll(rentry, sp.string()))) {
+				continue;
+			}
+			collsugg.push_back(std::move(rentry));
+		}
+		rsa_file.close();
+	}
+
+	if(collsugg.size()!=0)return collsugg;
+
+	for(auto &[srp, voff] : srp_voff) {
+
+		std::ifstream rsa_file(srp);
+		for(auto &offset : voff) {
+			rsa_file.seekg(offset);
+			std::getline(rsa_file, rentry);
+			if(!(eqrcoll(rentry, sp.string()))) {
+				continue;
+			}
+			collsugg.push_back(std::move(rentry));
+		}
+		rsa_file.close();
+	}
+	return collsugg;
 }
 
 std::string suba::fngen() {
@@ -179,9 +234,20 @@ std::string suba::fngen() {
 
 void suba::rbinf(std::filesystem::path sabf) {
 	if((std::filesystem::exists(sabf))) {
-		ReadBin ccd((sabf.string()));
-		this->sh_location =ccd.btoc_cd();
-		this->dfh_exists = true;
+	    try {
+	        ReadBin ccd(sabf.string());
+	        this->sh_location = ccd.btoc_cd();
+	        this->dfh_exists = true;
+	    } catch (const std::exception &e) {
+	        std::cerr << "\n[Warning] suba: Index file '" 
+	        << sabf.string()
+	        << "' is corrupted (" << e.what() 
+	        << "). Restoring from backup...\n";
+	        this->sh_location.clear();
+	        this->dfh_exists = false;
+	        //...
+	        //std::cerr <<"\nsuba: Backup restored.";
+	    }
 	}
 	this->sab_file = sabf;
 }
