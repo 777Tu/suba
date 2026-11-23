@@ -18,7 +18,7 @@ bool WriteBin::c_c_dtob(const std::unordered_map<double, PathLocation>  &cc_data
 	std::ofstream wb_file(this->wb_file, this->mode);
 
 	if(!(wb_file.is_open())) {
-		throw std::runtime_error("suba: error: failed to open index file");
+		throw std::runtime_error("suba: error: failed to open index file.\n");
 		return false;
 	}
 
@@ -51,7 +51,7 @@ ReadBin::ReadBin(fs::path rbf) {
 	if(fs::exists(rbf) && fs::is_regular_file(rbf)) {
 		ccb_file= std::move(rbf);
 	} else {
-		throw std::runtime_error("suba: error: File  does not exist or is not a regular file");
+		throw std::runtime_error("suba: error: File  does not exist or is not a regular file.\n");
 	}
 }
 
@@ -59,7 +59,7 @@ std::unordered_map<double, PathLocation> ReadBin::btoc_cd() {
 
 	std::ifstream rb_file(this->ccb_file, this->mode);
 	if(!(rb_file.is_open())) {
-		throw std::runtime_error("suba: error: failed to open index file");
+		throw std::runtime_error("suba: error: failed to open index file.\n");
 	}
 
 	std::unordered_map<double, PathLocation> cc_data;
@@ -68,7 +68,7 @@ std::unordered_map<double, PathLocation> ReadBin::btoc_cd() {
 	rb_file.read((char*)&d_fhk_vmsvso_size, sizeof(d_fhk_vmsvso_size));
 
 	if (rb_file.fail() || d_fhk_vmsvso_size > 10000000) {
-	    throw std::runtime_error("suba: Corrupted index file header (invalid map size).");
+	    throw std::runtime_error("suba: Corrupted index file header (invalid map size).\n");
 	 }
 	/*
 	 p-size<double, pl>
@@ -87,7 +87,7 @@ std::unordered_map<double, PathLocation> ReadBin::btoc_cd() {
 		size_t s_dbk_offsvso_size = 0;
 		rb_file.read((char*)&s_dbk_offsvso_size, sizeof(s_dbk_offsvso_size));
 		if (rb_file.fail() || s_dbk_offsvso_size > 100000) {
-		    throw std::runtime_error("suba: Corrupted index file (invalid DB count).");
+		    throw std::runtime_error("suba: Corrupted index file (invalid DB count).\n");
 		}
 		for(size_t s_db_size = 0; s_db_size<s_dbk_offsvso_size; s_db_size++) {
 			std::string sdb_k;
@@ -95,7 +95,7 @@ std::unordered_map<double, PathLocation> ReadBin::btoc_cd() {
 			size_t sdbk_size =0;
 			rb_file.read((char*)&sdbk_size, sizeof(sdbk_size));
             if (rb_file.fail() || sdbk_size == 0 || sdbk_size > 512) {
-                throw std::runtime_error("suba: Corrupted index file (invalid filename length).");
+                throw std::runtime_error("suba: Corrupted index file (invalid filename length).\n");
             }
 			sdb_k.resize(sdbk_size);
 			rb_file.read((char*)sdb_k.data(), sdbk_size);
@@ -105,7 +105,7 @@ std::unordered_map<double, PathLocation> ReadBin::btoc_cd() {
 			rb_file.read((char*)&voff_size, sizeof(voff_size));
 
 			if (rb_file.fail() || voff_size > 1000000) {
-			    throw std::runtime_error("suba: Corrupted index file (invalid offsets vector size).");
+			    throw std::runtime_error("suba: Corrupted index file (invalid offsets vector size).\n");
 			}
 			for(size_t stroff_size = 0; stroff_size<voff_size; stroff_size++) {
 				std::streamoff offs;

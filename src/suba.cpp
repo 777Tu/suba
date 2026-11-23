@@ -5,6 +5,7 @@
 #include <ctime>
 #include <sstream>
 #include <utility>
+#include <unordered_set>
 
 #include "../include/fchash.h"
 #include "../include/iobs.h"
@@ -13,7 +14,7 @@
 
 suba::suba(std::filesystem::path u_p , std::filesystem::path sabf) {
 	if(!(std::filesystem::exists(u_p) && isdir(u_p))){
-		throw std::runtime_error("suba: error: Path doesn't exists");
+		throw std::runtime_error("suba: error: Path doesn't exists.\n");
 	}
 	this->u_path=std::move(u_p);
 	this->r_path = std::filesystem::current_path();
@@ -61,7 +62,7 @@ void suba::scanp(std::filesystem::path &ep) {
 	std::ofstream wsa_file(gsa_file);
 
 	if(!wsa_file.is_open()) {
-		throw std::runtime_error("suba: error: failed to open index file");
+		throw std::runtime_error("suba: error: failed to open index file.\n");
 	}
 
 	PathLocation p_location;
@@ -79,7 +80,7 @@ void suba::scanp(std::filesystem::path &ep) {
 			gsa_file=fngen();
 			wsa_file.open(gsa_file, std::ios::out | std::ios::app);
 			if(!(wsa_file.is_open())) {
-				throw std::runtime_error("suba: error: failed to open index file");
+				throw std::runtime_error("suba: error: failed to open index file.\n");
 			}
 		}
 		double cfh = fchash(f_name, 5);
@@ -137,11 +138,12 @@ std::vector<std::string> suba::getp(std::filesystem::path &sp) {
             }
             
         if (!this->dfh_exists) {
-            throw std::runtime_error("suba: error: no index file found. Run 'suba -e <path>' to scan first.");
+            throw std::runtime_error("suba: error: no index file found. Run 'suba -e <path>' to scan first.\n");
         }
     
     }
 	std::vector<std::string> collsugg;
+	std::unordered_set<std::string> rerror;
 	std::string rentry;
 
 	std::string sv = sp.string();
@@ -158,14 +160,14 @@ std::vector<std::string> suba::getp(std::filesystem::path &sp) {
 
 	if (!findp(hsp)) {
 		if (sppath(sp)) {
-			throw std::runtime_error("suba: error: no matching directory");
+			throw std::runtime_error("suba: error: no matching directory.\n");
 		}
 		hsp = fchash(sp.filename().string(), 5);
 		f = false;
 	}
 	if (!f) {
 		if (!findp(hsp)) {
-			throw std::runtime_error("suba: error: no matching directory");
+			throw std::runtime_error("suba: error: no matching directory.\n");
 		}
 	}
 
@@ -174,14 +176,25 @@ std::vector<std::string> suba::getp(std::filesystem::path &sp) {
 	for(auto &[srp, voff] : srp_voff) {
 
 		std::ifstream rsa_file(srp);
-		if(!(std::filesystem::exists(srp) && rsa_file.is_open())) {
-			std::cout<<"suba: error: "<<srp<<" doesn't exists or couldn't open"<<std::endl;
+		if(!(std::filesystem::exists(srp) && rsa_file.is_open())){
+			if(rerror.insert(srp).second){
+			    std::cerr<<"suba: error: "<<srp
+		    	<<" doesn't exists or couldn't open.\n";
+			}
 			continue;
+			    
 		}
 		if(f) {
 			for(auto &offset : voff) {
 				rsa_file.seekg(offset);
 				std::getline(rsa_file, rentry);
+				if (rsa_file.fail() || rentry.empty()){
+				    if(rerror.insert(srp).second){
+				        std::cerr<<"suba: error: path index file '"<<srp 
+				        << "' is corrupted or truncated at offset.\n";
+				    }
+				     continue;
+				}
 				collsugg.push_back(std::move(rentry));
 			}
 			rsa_file.close() ; continue;
@@ -190,6 +203,13 @@ std::vector<std::string> suba::getp(std::filesystem::path &sp) {
 		for(auto &offset : voff) {
 			rsa_file.seekg(offset);
 			std::getline(rsa_file, rentry);
+			if (rsa_file.fail() || rentry.empty()){
+			    if(rerror.insert(srp).second){
+			        std::cerr<<"suba: error: path index file '"<<srp
+			        <<"' is corrupted or truncated at offset.\n";
+			    }
+			    continue;
+			}
 			if(!(eqcoll(rentry, sp.string()))) {
 				continue;
 			}
@@ -206,6 +226,13 @@ std::vector<std::string> suba::getp(std::filesystem::path &sp) {
 		for(auto &offset : voff) {
 			rsa_file.seekg(offset);
 			std::getline(rsa_file, rentry);
+			if (rsa_file.fail() || rentry.empty()){
+			    if(rerror.insert(srp).second){
+			        std::cerr<<"suba: error: path index file '"<<srp
+			        <<"' is corrupted or truncated at offset.\n";
+			    }
+			    continue;
+			}
 			if(!(eqrcoll(rentry, sp.string()))) {
 				continue;
 			}

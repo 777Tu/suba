@@ -38,17 +38,31 @@ int main() {
 
 	*/
 
+	string v="inside_pro1";
+	if(!b.getpath(v).empty()){
+	    cout<<t<<b.getpath(v)[0];
+	};
 	
-	cout<<t<<b.getpath("inside_pro1")[0];
-	cout<<t<<b.getpath("2w8/inside_pro3")[0];
-	cout<<t<<b.getpath("/inside_pro3/")[0];
-	cout<<t<<b.getpath("project2/inside_pro2")[0];
-	cout<<t<<b.getpath("same_one")[0];
-
-	for(auto r : b.getpath("same_one")){
-	    cout<<t<<"Collision Suggestion: "<<r;
+	v = "2w8/inside_pro3";	
+	if(!b.getpath(v).empty()){
+		cout<<t<<b.getpath(v)[0];
+	}
+	v="/inside_pro2/";
+	if(!b.getpath(v).empty()){
+	    cout<<t<<b.getpath(v)[0];
 	}
 	
+	v="project2/inside_pro2";
+	if(!b.getpath(v).empty()){
+	    cout<<t<<b.getpath(v)[0];
+
+	}
+	v = "same_one";
+	if(!b.getpath(v).empty()){
+	    for(auto r : b.getpath(v)){
+	      cout<<t<<"Collision Suggestion: "<<r;
+    	}
+	}
 	cout<<n;
 	
 	return 0;
